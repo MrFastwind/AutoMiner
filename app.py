@@ -2,6 +2,7 @@ from os import sep
 import signal
 import sys
 import psutil
+import subprocess
 import pandas as pd
 from typing import Union
 
@@ -54,11 +55,29 @@ class ProcessSearcher:
 
 class Miner:
     __filepath: str
-    __process: psutil.Process
+    __args: list[str]
+    __process: subprocess.Popen
+    __alive: bool = False
     filepath = property(__filepath)
+    args = property(__args)
+    alive = property(__alive)
 
-    def start():
-        psutil
+    def __init__(self, file: str, args: list):
+        self.__filepath, self.__args = file, args
+
+    def start(self):
+        self.__process = subprocess.Popen(
+            executable=self.__filepath, args=self.__args)
+
+    def stop(self):
+        if self.alive:
+            self.__process.terminate()
+            self.__alive = False
+
+    def kill(self):
+        if self.alive:
+            self.__process.kill()
+            self.__alive = False
 
 
 if __name__ == "__main__":
