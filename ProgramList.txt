@@ -1,2 +1,5 @@
 arma3.exe
+arma3_x64.exe
 x360ce.exe
+Shipbreaker.exe
+RocketLeague.exe
