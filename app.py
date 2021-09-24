@@ -1,22 +1,20 @@
-from os import sep
 import os
+import pathlib
 import signal
-import sys
-import psutil
 import subprocess
+import sys
 import threading
 import time
+from os import sep
 from pathlib import Path
-import numpy as np
-import pandas as pd
-from typing import Union
-import pathlib
+from typing import Tuple, Union
 
-FILEPATH = Path("D:\Mining\lolMiner\lolMiner.exe")
-ARGS = list(["-u", "0x1e3543b1845c418668cE20FE2eaB28484A6B8d1B.PC-Miner",
-            "--algo", "ETCHASH",
-             "--pool", "eu1-etc.ethermine.org:4444"])
-CMD = list[[FILEPATH] + ARGS]
+import pandas as pd
+import psutil
+
+DIRPATH = Path("D:\Mining\lolMiner")
+FILEPATH = Path("lolMiner.exe")
+ARGS = ("--algo", "ETCHASH", "--pool", "eu1-etc.ethermine.org:4444", "--user", "0x1e3543b1845c418668cE20FE2eaB28484A6B8d1B.PC-Miner")
 LISTFILE = pathlib.Path("ProgramList.txt")
 
 
@@ -31,7 +29,7 @@ class App:
         self.__listupdater = ProgramListUpdater(LISTFILE)
         self.__process_searcher = ProcessSearcher(
             FileLoader.loadFile(LISTFILE))
-        self.__miner = Miner(file=FILEPATH, args=ARGS)
+        self.__miner = Miner(executable=DIRPATH / FILEPATH, args=ARGS)
         self.__thread_checker = threading.Thread(target=self.checker)
         self.__alive = False
         self.__sleep_time = 1
@@ -108,13 +106,12 @@ class ProcessSearcher:
         self._process_list = self.__listToSet(process_list)
 
     def __listToSet(self, process_list):
-        return set([proc.lower() for proc in process_list])
+        return {proc.lower() for proc in process_list}
 
     def searchInList(self) -> bool:
-        for p in psutil.process_iter():
-            if p.name().lower() in self._process_list:
-                return True
-        return False
+        return any(
+            p.name().lower() in self._process_list for p in psutil.process_iter()
+        )
 
 
 class Miner:
@@ -123,17 +120,34 @@ class Miner:
     __process: subprocess.Popen = None
     __return_code: int
 
-    filepath = property(lambda self: self.__filepath)
+    executable = property(lambda self: self.__filepath)
     args = property(lambda self: self.__args)
     alive = property(lambda self: self.isAlive())
 
-    def __init__(self, file: str, args: list):
-        self.__filepath, self.__args = file, args
+    def __init__(self, args:Union[list[str],Tuple], executable: Union[str,Path]=None):
+        """Miner constructor.
+
+        Args:
+            args (Union[list[str],Tuple]): List of arguments to pass at the Miner
+            executable (Union[str,Path], optional): Executable to use for the miner, if None it will use the first element of args. Defaults to None.
+
+        Raises:
+            ValueError: if args and executable are not set.
+        """
+        
+        if not args and not executable:
+            raise ValueError()
+
+        args = list(args)
+
+        executable = args.pop(0) if not executable else str(executable)
+        self.__filepath, self.__args = executable, args
+    
+    def __cmd(self):
+        return [self.__filepath] + self.__args
 
     def start(self):
-        self.__process = subprocess.Popen(
-            executable=self.__filepath, args=self.__args, stdin=subprocess.DEVNULL, cwd=Path("D:\Mining\lolMiner"))
-        ...
+        self.__process = subprocess.Popen(args=self.__cmd(), stdin=subprocess.DEVNULL)
 
     def stop(self):
         if self.alive:
@@ -144,14 +158,14 @@ class Miner:
             self.__process.kill()
 
     def isAlive(self) -> bool:
-        if self.__process == None:
+        if self.__process is None:
             return False
         if not self.getReturnCode():
             return True
         return False
 
     def getReturnCode(self):
-        if self.__process == None:
+        if self.__process is None:
             return None
         self.__return_code = self.__process.poll()
         return self.__return_code

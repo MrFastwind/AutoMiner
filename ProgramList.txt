@@ -4,3 +4,6 @@ x360ce.exe
 Shipbreaker.exe
 RocketLeague.exe
 csgo.exe
+NMS.exe
+Boston.exe
+csgo.exe
