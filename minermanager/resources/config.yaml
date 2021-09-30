@@ -1,0 +1,16 @@
+workers:
+  profiles:
+    default:
+      wallet: 0x1e3543b1845c418668cE20FE2eaB28484A6B8d1B
+      name: PC-Miner
+pools:
+  profiles:
+    ETC-POOL:
+      address: eu1-etc.ethermine.org
+      port: 4444
+miners:
+  profiles:
+    MinerZ: 
+      type:
+      executable:
+      additional_args:
