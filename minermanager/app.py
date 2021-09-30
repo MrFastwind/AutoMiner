@@ -5,11 +5,10 @@ import sys
 import threading
 from pathlib import Path
 from miners import Miner, GeneralMiner
-from resourcemanager.FileLoader import FileLoader, ProgamListLoader
+from resourcemanager.FileLoader import ProgamListLoader
 from process import ProcessListUpdater, ProcessSearcher
 
-DIRPATH = Path("D:\Mining\lolMiner")
-FILEPATH = Path("lolMiner.exe")
+FILEPATH = Path("D:\Mining\lolMiner") / Path("lolMiner.exe")
 ARGS = ("--algo", "ETCHASH", "--pool", "eu1-etc.ethermine.org:4444", "--user", "0x1e3543b1845c418668cE20FE2eaB28484A6B8d1B.PC-Miner")
 LISTFILE = pathlib.Path("ProgramList.txt")
 
@@ -24,8 +23,8 @@ class App:
         signal.signal(signal.SIGINT, lambda sig, frame: self.signalHandler())
         self.__listupdater = ProcessListUpdater(LISTFILE)
         self.__process_searcher = ProcessSearcher(
-            FileLoader.loadFile(LISTFILE))
-        self.__miner:Miner = GeneralMiner(executable=DIRPATH / FILEPATH, args=ARGS)
+            ProgamListLoader.loadFile(LISTFILE))
+        self.__miner:Miner = GeneralMiner(executable=FILEPATH, args=ARGS)
         self.__thread_checker = threading.Thread(target=self.checker)
         self.__alive = False
         self.__sleep_time = 1
@@ -60,7 +59,3 @@ class App:
         self.__alive = False
         self.__miner.stop()
 
-
-if __name__ == "__main__":
-    app = App()
-    app.start()
